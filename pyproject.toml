@@ -7,6 +7,9 @@ authors = [
 ]
 dependencies = [
     "fastapi[standard]>=0.112.1",
+    "jinja2>=3.1.4",
+    "lxml>=5.3.0",
+    "pydantic-settings>=2.4.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
@@ -46,10 +49,10 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D211", "D212", "D213"]
+ignore = ["ANN401", "D203", "D211", "D212", "D213"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D104"]
+"tests/**/*.py" = ["D100", "D104", "S"]
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -64,6 +67,9 @@ reportUnnecessaryComparison = true
 reportUnnecessaryContains = true
 reportUnnecessaryIsInstance = true
 reportUnnecessaryTypeIgnoreComment = true
+# signxml and lxml have too many import problems
+reportPrivateImportUsage = false
+reportAttributeAccessIssue = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
