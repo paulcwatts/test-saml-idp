@@ -1,6 +1,6 @@
 """Configuration for the SAML application."""
 
-from collections.abc import Callable, Coroutine
+import hashlib
 from pathlib import Path
 from typing import Any, Required, TypedDict
 
@@ -42,9 +42,6 @@ class Settings(BaseSettings):
     saml_idp_show_users: bool = False
     """Whether to show the user credentials on the login screen."""
 
-    check_saml_idp_user: Callable[[str, str], Coroutine[Any, Any, bool]] | None = None
-    """The function used to check whether a user is valid."""
-
     model_config = SettingsConfigDict(env_file=".env")
 
     def model_post_init(self, __context: Any) -> None:
@@ -55,3 +52,35 @@ class Settings(BaseSettings):
         if not self.saml_idp_metadata_key and self.saml_idp_metadata_key_file:
             with Path(self.saml_idp_metadata_key_file).open() as f:
                 self.saml_idp_metadata_key = f.read()
+
+    async def authenticate_user(self, username: str, password: str) -> tuple[User, str]:
+        """
+        Get a user from a username/password combo.
+
+        If it's successful, return a username and session ID. Otherwise, raise an error.
+        """
+        for user in self.saml_idp_users or []:
+            if user["username"] == username and user["password"] == password:
+                return user, self.generate_session_id(user)
+        msg = "Invalid username or password."
+        raise ValueError(msg)
+
+    async def get_user_from_session(self, session_id: str) -> User | None:
+        """Return the user from a session."""
+        for user in self.saml_idp_users or []:
+            if session_id == self.generate_session_id(user):
+                return user
+        return None
+
+    @classmethod
+    def generate_session_id(cls, user: User) -> str:
+        """
+        Generate a session ID for a user.
+
+        This is *NOT* meant to be secure. It's only meant so we have a way to
+        identify a user without a local state.
+        """
+        h = hashlib.new("sha256")
+        h.update(user["username"].encode())
+        h.update(user["password"].encode())
+        return h.hexdigest()
