@@ -7,4 +7,4 @@ from saml_idp import router
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware)
-app.include_router(router, prefix="/auth")
+app.include_router(router)

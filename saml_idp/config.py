@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     saml_idp_users: Json[list[User]] | None = None
     """The list of test users for the IdP."""
 
+    saml_idp_show_users: bool = False
+    """Whether to show the user credentials on the login screen."""
+
     check_saml_idp_user: Callable[[str, str], Coroutine[Any, Any, bool]] | None = None
     """The function used to check whether a user is valid."""
 

@@ -15,7 +15,7 @@ app.include_router(router)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _setup_settings() -> None:
+def settings() -> Settings:
     """Mock settings for the application."""
     path = Path(__file__).parent.resolve() / "files"
 
@@ -30,6 +30,7 @@ def _setup_settings() -> None:
         return settings
 
     app.dependency_overrides[get_settings] = override_get_settings
+    return settings
 
 
 @pytest_asyncio.fixture

@@ -5,7 +5,15 @@ from httpx import AsyncClient
 from lxml import etree
 from starlette import status
 
+from saml_idp import Settings
+
 pytestmark = pytest.mark.asyncio
+
+
+@pytest.fixture(autouse=True)
+def _set_users(settings: Settings) -> None:
+    """Add users for these tests."""
+    settings.saml_idp_users = [{"username": "taylorswift", "password": "all2well"}]
 
 
 async def test_metadata_xml(ac: AsyncClient) -> None:
@@ -26,3 +34,19 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
         xmlschema_doc = etree.parse(f)
         schema = etree.XMLSchema(xmlschema_doc)
         schema.assertValid(etree.fromstring(xml))
+
+
+async def test_login_get(ac: AsyncClient) -> None:
+    """You can get the login page."""
+    response = await ac.get("/login")
+    assert response.status_code == status.HTTP_OK, response.content
+    assert "text/html" in response.headers["content-type"]
+    assert b"taylorswift" not in response.content
+
+
+async def test_login_show_users(ac: AsyncClient, settings: Settings) -> None:
+    """You can show the user credentials."""
+    settings.saml_idp_show_users = True
+    response = await ac.get("/login")
+    assert response.status_code == status.HTTP_200_OK, response.content
+    assert b"taylorswift" in response.content

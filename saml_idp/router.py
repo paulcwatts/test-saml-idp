@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 
 from fastapi import APIRouter, Depends
 from lxml import etree
+from starlette.requests import Request
 from starlette.responses import Response
 from starlette.templating import Jinja2Templates
 
@@ -17,13 +18,13 @@ from .metadata import SamlMetadata
 template_path = Path(__file__).parent.resolve() / "templates"
 templates = Jinja2Templates(directory=str(template_path))
 
+GetSettings = Annotated[Settings, Depends(get_settings)]
+
 router = APIRouter()
 
 
 @router.get("/metadata.xml")
-def metadata_xml(
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> Response:
+def metadata_xml(settings: GetSettings) -> Response:
     """Return the IdP's metadata.xml."""
     lines = [line.strip() for line in settings.saml_idp_metadata_cert.splitlines()]
     cert = "".join(lines[1:-1])
@@ -37,3 +38,16 @@ def metadata_xml(
         cert=cert,
     )
     return Response(etree.tostring(metadata.to_xml()), media_type="text/xml")
+
+
+@router.get("/login")
+async def login(request: Request, settings: GetSettings) -> Response:
+    """Provide a non-SAML login."""
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {
+            "show_users": settings.saml_idp_show_users,
+            "users": settings.saml_idp_users,
+        },
+    )
