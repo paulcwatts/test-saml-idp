@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="my-24 text-center sm:mx-auto sm:w-full sm:max-w-sm">
+  <p>Please wait...</p>
+
+  <form id="redir" class="hidden" action="{{ destination }}" method="POST">
+    <label for="SAMLResponse">SAML Response</label>
+    <input
+      type="hidden"
+      id="SAMLResponse"
+      name="SAMLResponse"
+      value="{{ saml_response }}"
+      required=""
+    />
+    {% if relay_state %}
+    <label for="RelayState">Relay State</label>
+    <input
+      type="hidden"
+      id="RelayState"
+      name="RelayState"
+      value="{{ relay_state }}"
+      required=""
+    />
+    {% endif %}
+  </form>
+</div>
+<script>
+  window.addEventListener("load", function () {
+    document.querySelector("#redir").submit();
+  })
+</script>
+{% endblock %}

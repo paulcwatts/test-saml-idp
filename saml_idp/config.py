@@ -2,7 +2,7 @@
 
 import hashlib
 from pathlib import Path
-from typing import Any, Required, TypedDict
+from typing import Any, NotRequired, Required, TypedDict
 
 from pydantic import HttpUrl, Json
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,6 +13,7 @@ class User(TypedDict):
 
     username: Required[str]
     password: Required[str]
+    attributes: NotRequired[dict[str, str]]
 
 
 class Settings(BaseSettings):
@@ -78,7 +79,7 @@ class Settings(BaseSettings):
         Generate a session ID for a user.
 
         This is *NOT* meant to be secure. It's only meant so we have a way to
-        identify a user without a local state.
+        identify a user without a local state or database.
         """
         h = hashlib.new("sha256")
         h.update(user["username"].encode())
