@@ -33,8 +33,8 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
     assert "text/xml" in response.headers["content-type"]
     xml = response.content.decode()
     assert "http://localhost:8000/idp" in xml
-    assert "http://localhost:8000/signin" in xml
-    assert "http://localhost:8000/logout" in xml
+    assert "http://test/signin" in xml
+    assert "http://test/logout" in xml
 
     # Make sure the metadata validates
     schema_doc = (
@@ -208,6 +208,76 @@ async def test_login_post_fail_saml(
     assert b"https://example.com/saml2/idpresponse" in response.content
     assert b"https://myissuer.com/" in response.content
     assert not relay_state or relay_state.encode() in response.content
+
+
+def logout(
+    issue: datetime | None = None,
+    not_after: datetime | None = None,
+    session_index: str = "xxxx",
+) -> str:
+    """Create a logout request."""
+    issue = issue or datetime.now(UTC)
+    not_after = not_after or issue + timedelta(minutes=5)
+    issue_instant = saml2_timestamp(issue)
+    not_on_or_after = saml2_timestamp(not_after)
+    req = f"""
+<saml2p:LogoutRequest xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol"
+                      Destination="https://localhost:8000/auth/logout"
+                      ID="_7d936c3c-0604-4660-96a6-7196e0d10989"
+                      IssueInstant="{issue_instant}"
+                      NotOnOrAfter="{not_on_or_after}"
+                      Version="2.0"
+                      >
+    <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"
+                  Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity"
+                  >http://myissuer.com</saml2:Issuer>
+    <saml2:NameID xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"
+                  Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+                  >davidbowie</saml2:NameID>
+    <saml2p:SessionIndex>{session_index}</saml2p:SessionIndex>
+</saml2p:LogoutRequest>
+    """
+    return deflate_and_encode(req).decode()
+
+
+@pytest.mark.parametrize("relay_state", [None, "xxxx_relay_state"])
+async def test_logout(ac: AsyncClient, relay_state: str | None, user: User) -> None:
+    """Logout works."""
+    ac.cookies = Cookies({"session_id": Settings.generate_session_id(user)})
+    response = await ac.get(
+        "/logout",
+        params={"SAMLRequest": logout(), "RelayState": relay_state},
+    )
+    assert b"SAMLResponse" in response.content
+    assert not relay_state or relay_state.encode() in response.content
+    # Cookies were deleted
+    assert response.cookies == Cookies([])
+
+
+async def test_logout_unauth(ac: AsyncClient) -> None:
+    """Logout returns request denied if not logged in."""
+    response = await ac.get("/logout", params={"SAMLRequest": logout()})
+    assert b"SAMLResponse" in response.content
+    assert response.cookies == Cookies([])
+
+
+async def test_logout_old(ac: AsyncClient) -> None:
+    """Logout requests can be too old."""
+    dt = datetime.now(UTC) - timedelta(days=3)
+    response = await ac.get("/logout", params={"SAMLRequest": logout(dt)})
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.content
+    assert response.content == b"Out of date"
+
+
+async def test_logout_not_on_or_after(ac: AsyncClient) -> None:
+    """We respect not on of after parameter."""
+    issue_time = datetime.now(UTC) - timedelta(minutes=4)
+    not_on_or_after = issue_time + timedelta(minutes=1)
+    response = await ac.get(
+        "/logout", params={"SAMLRequest": logout(issue_time, not_on_or_after)}
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, response.content
+    assert response.content == b"Out of date (not on or after)"
 
 
 async def test_logout_post(ac: AsyncClient, user: User) -> None:

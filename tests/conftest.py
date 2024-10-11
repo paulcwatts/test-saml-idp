@@ -5,7 +5,6 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from pydantic_core import Url
 
 from saml_idp import Settings, router
 from saml_idp.dependencies import get_settings
@@ -21,7 +20,6 @@ def settings() -> Settings:
 
     settings = Settings(
         saml_idp_entity_id="http://localhost:8000/idp",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_metadata_cert_file=str(path / "metadata.crt"),
         saml_idp_metadata_key_file=str(path / "metadata.key"),
     )

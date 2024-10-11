@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from pydantic_core import Url
 
 from saml_idp import Settings
 
@@ -12,7 +11,6 @@ def test_metadata_file() -> None:
     """The file parameters will read the file contents."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_metadata_cert_file=str(path / "metadata.crt"),
         saml_idp_metadata_key_file=str(path / "metadata.key"),
     )
@@ -24,7 +22,6 @@ def test_metadata_file_ignored() -> None:
     """If the metadata cert/key values are already populated, the files are ignored."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_metadata_cert="mycert",
         saml_idp_metadata_key="mykey",
         saml_idp_metadata_cert_file=str(path / "metadata.crt"),
@@ -39,7 +36,6 @@ async def test_authenticate_user() -> None:
     """You can authenticate a user."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
     )
     user, session_id = await settings.authenticate_user("taylorswift", "all2well")
@@ -52,7 +48,6 @@ async def test_authenticate_user_fail() -> None:
     """Authenticate user throws an error if failed."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
     )
     with pytest.raises(ValueError, match=r"Invalid username or password."):
@@ -64,7 +59,6 @@ async def test_get_user_from_session() -> None:
     """You can get a user from a session."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
         saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
     )
     user = await settings.get_user_from_session(
@@ -78,10 +72,7 @@ async def test_get_user_from_session() -> None:
 @pytest.mark.asyncio
 async def test_get_user_from_session_fail() -> None:
     """Failing to get a user returns None."""
-    settings = Settings(
-        saml_idp_entity_id="x",
-        saml_idp_base_url=Url("http://localhost:8000"),
-    )
+    settings = Settings(saml_idp_entity_id="x")
     user = await settings.get_user_from_session(
         settings.generate_session_id({"username": "a", "password": "b"}),
     )

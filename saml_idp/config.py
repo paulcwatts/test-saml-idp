@@ -4,7 +4,7 @@ import hashlib
 from pathlib import Path
 from typing import Any, NotRequired, Required, TypedDict
 
-from pydantic import HttpUrl, Json
+from pydantic import Json
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,9 +21,6 @@ class Settings(BaseSettings):
 
     saml_idp_entity_id: str
     """The entity ID of the SAML IdP."""
-
-    saml_idp_base_url: HttpUrl
-    """The base URL of the SAML IdP."""
 
     saml_idp_metadata_cert: str = ""
     """The certificate used for the SAML metadata."""

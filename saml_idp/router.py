@@ -4,7 +4,6 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urljoin
 
 from fastapi import APIRouter, Form, Query
 from lxml import etree
@@ -17,7 +16,7 @@ from starlette.templating import Jinja2Templates
 from .config import Settings, User
 from .dependencies import GetSettings, GetUser
 from .metadata import SamlMetadata
-from .models import AuthnRequestField, AuthnResponse
+from .models import AuthnRequestField, AuthnResponse, LogoutRequestField, LogoutResponse
 from .utils import is_out_of_date
 
 template_path = Path(__file__).parent.resolve() / "templates"
@@ -28,16 +27,15 @@ router = APIRouter()
 
 
 @router.get("/metadata.xml")
-def metadata_xml(settings: GetSettings) -> Response:
+def metadata_xml(request: Request, settings: GetSettings) -> Response:
     """Return the IdP's metadata.xml."""
     lines = [line.strip() for line in settings.saml_idp_metadata_cert.splitlines()]
     cert = "".join(lines[1:-1])
 
-    base_url = str(settings.saml_idp_base_url)
     metadata = SamlMetadata(
         entity_id=settings.saml_idp_entity_id,
-        signon_url=urljoin(base_url, "/signin"),
-        logout_url=urljoin(base_url, "/logout"),
+        signon_url=str(request.url_for("signin")),
+        logout_url=str(request.url_for("logout")),
         valid_until=datetime.now(UTC) + timedelta(days=365),
         cert=cert,
     )
@@ -190,6 +188,58 @@ async def login_post(
             "relay_state": relay_state,
         }
         return templates.TemplateResponse(request, "login.html", context)
+
+
+@router.get("/logout", include_in_schema=False)
+async def logout(
+    request: Request,
+    user: GetUser,
+    saml_request: Annotated[LogoutRequestField, Query(alias="SAMLRequest")],
+    relay_state: Annotated[str, Query(alias="RelayState")] = "",
+) -> Response:
+    """Handle SAML logout requests."""
+    now = datetime.now(UTC)
+    if is_out_of_date(saml_request.issue_instant):
+        # We *should* return back to the SP,
+        # but we don't care and this is easier to test.
+        return Response("Out of date", status_code=400)
+    if saml_request.not_on_or_after < now:
+        return Response("Out of date (not on or after)", status_code=400)
+
+    issue_instant = now
+    destination = str(request.url_for("logout"))
+    clear_cookie = False
+    if user:
+        # NOTE: Check to make sure the person logged in is the
+        # one that is wanting to be logged out
+
+        logout_response = LogoutResponse(
+            issue_instant=issue_instant,
+            issuer=saml_request.issuer,
+            destination=Url(destination),
+            in_response_to=saml_request.id,
+            status_code="urn:oasis:names:tc:SAML:2.0:status:Success",
+        )
+        clear_cookie = True
+    else:
+        logout_response = LogoutResponse(
+            issue_instant=issue_instant,
+            issuer=saml_request.issuer,
+            destination=Url(destination),
+            in_response_to=saml_request.id,
+            status_code="urn:oasis:names:tc:SAML:2.0:status:RequestDenied",
+        )
+
+    context = {
+        "destination": destination,
+        "saml_response": logout_response.to_response(),
+        "relay_state": relay_state,
+    }
+
+    response = templates.TemplateResponse(request, "redir.html", context)
+    if clear_cookie:
+        response.delete_cookie("session_id")
+    return response
 
 
 @router.post("/logout-form")
