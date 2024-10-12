@@ -15,8 +15,13 @@ from starlette.templating import Jinja2Templates
 
 from .config import Settings, User
 from .dependencies import GetSettings, GetUser
-from .metadata import SamlMetadata
-from .models import AuthnRequestField, AuthnResponse, LogoutRequestField, LogoutResponse
+from .models import (
+    AuthnRequestField,
+    AuthnResponse,
+    LogoutRequestField,
+    LogoutResponse,
+    SamlMetadata,
+)
 from .utils import is_out_of_date
 
 template_path = Path(__file__).parent.resolve() / "templates"

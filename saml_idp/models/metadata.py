@@ -7,7 +7,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from pydantic import BaseModel
 
-from .utils import saml2_timestamp
+from saml_idp.utils import saml2_timestamp
 
 META = ElementMaker(
     namespace="urn:oasis:names:tc:SAML:2.0:metadata",

@@ -4,6 +4,7 @@ from .authn_request import AuthnRequest, AuthnRequestField
 from .authn_response import AuthnResponse
 from .logout_request import LogoutRequest, LogoutRequestField
 from .logout_response import LogoutResponse
+from .metadata import SamlMetadata
 
 __all__ = [
     "AuthnRequest",
@@ -12,4 +13,5 @@ __all__ = [
     "LogoutRequest",
     "LogoutRequestField",
     "LogoutResponse",
+    "SamlMetadata",
 ]
