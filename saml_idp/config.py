@@ -2,9 +2,9 @@
 
 import hashlib
 from pathlib import Path
-from typing import Any, NotRequired, Required, TypedDict
+from typing import Any, Literal, NotRequired, Required, TypedDict
 
-from pydantic import Json
+from pydantic import HttpUrl, Json
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,9 @@ class Settings(BaseSettings):
 
     saml_idp_metadata_key_file: str = ""
     """The path of the SAML metadata key file."""
+
+    saml_idp_logout_url: HttpUrl | Literal[""] = ""
+    """The logout URL to redirect to."""
 
     saml_idp_users: Json[list[User]] | None = None
     """The list of test users for the IdP."""

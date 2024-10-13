@@ -50,7 +50,15 @@ def metadata_xml(request: Request, settings: GetSettings) -> Response:
 @router.get("/")
 async def main(request: Request, user: GetUser) -> Response:
     """Provide a way to show authenticated state."""
-    return templates.TemplateResponse(request, "main.html", {"user": user})
+    return templates.TemplateResponse(
+        request,
+        "main.html",
+        {
+            "user": user,
+            "logout_url": request.url_for("logout_post"),
+            "login_url": request.url_for("login"),
+        },
+    )
 
 
 def redir(
@@ -129,6 +137,7 @@ async def signin(
         "destination": destination,
         "request_issuer": request_issuer,
         "relay_state": relay_state,
+        "action": request.url_for("login"),
     }
     return templates.TemplateResponse(request, "login.html", context)
 
@@ -142,6 +151,7 @@ async def login(request: Request, settings: GetSettings) -> Response:
         {
             "show_users": settings.saml_idp_show_users,
             "users": settings.saml_idp_users,
+            "action": request.url_for("login"),
         },
     )
 
@@ -179,7 +189,9 @@ async def login_post(
             )
         # This is the normal login
         # Set a cookie and redirect
-        response = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+        response = RedirectResponse(
+            request.url_for("main"), status_code=status.HTTP_302_FOUND
+        )
         response.set_cookie("session_id", session_id, max_age=3600)
         return response
     except ValueError as e:
@@ -191,14 +203,16 @@ async def login_post(
             "destination": destination,
             "request_issuer": request_issuer,
             "relay_state": relay_state,
+            "action": request.url_for("login"),
         }
         return templates.TemplateResponse(request, "login.html", context)
 
 
-@router.get("/logout", include_in_schema=False)
+@router.get("/logout")
 async def logout(
     request: Request,
     user: GetUser,
+    settings: GetSettings,
     saml_request: Annotated[LogoutRequestField, Query(alias="SAMLRequest")],
     relay_state: Annotated[str, Query(alias="RelayState")] = "",
 ) -> Response:
@@ -212,7 +226,7 @@ async def logout(
         return Response("Out of date (not on or after)", status_code=400)
 
     issue_instant = now
-    destination = str(request.url_for("logout"))
+    destination = str(settings.saml_idp_logout_url)
     clear_cookie = False
     if user:
         # NOTE: Check to make sure the person logged in is the
@@ -248,8 +262,10 @@ async def logout(
 
 
 @router.post("/logout-form")
-async def logout_post() -> Response:
+async def logout_post(request: Request) -> Response:
     """Provide a non-SAML login."""
-    response = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+    response = RedirectResponse(
+        request.url_for("main"), status_code=status.HTTP_302_FOUND
+    )
     response.delete_cookie("session_id")
     return response
