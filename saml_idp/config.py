@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     saml_idp_show_users: bool = False
     """Whether to show the user credentials on the login screen."""
 
+    saml_idp_router_prefix: str = ""
+    """The prefix under which to include the SAML router."""
+
     model_config = SettingsConfigDict(env_file=".env")
 
     def model_post_init(self, __context: Any) -> None:
@@ -85,3 +88,8 @@ class Settings(BaseSettings):
         h.update(user["username"].encode())
         h.update(user["password"].encode())
         return h.hexdigest()
+
+
+# pyright thinks the non-default attributes are required, but they are
+# filled in by the env
+settings = Settings()  # pyright: ignore [reportCallIssue]

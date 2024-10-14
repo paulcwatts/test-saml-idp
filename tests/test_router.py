@@ -7,20 +7,20 @@ from lxml import etree
 from starlette import status
 
 from saml_idp import Settings
-from saml_idp.config import User
+from saml_idp.config import User, settings
 from saml_idp.utils import deflate_and_encode, saml2_timestamp
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(autouse=True)
-def _set_users(settings: Settings) -> None:
+def _set_users() -> None:
     """Add users for these tests."""
     settings.saml_idp_users = [{"username": "taylorswift", "password": "all2well"}]
 
 
 @pytest.fixture
-def user(settings: Settings) -> User:
+def user() -> User:
     """Return the first user."""
     assert settings.saml_idp_users
     return settings.saml_idp_users[0]
@@ -32,7 +32,7 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert "text/xml" in response.headers["content-type"]
     xml = response.content.decode()
-    assert "http://localhost:8000/idp" in xml
+    assert settings.saml_idp_entity_id in xml
     assert "http://test/signin" in xml
     assert "http://test/logout" in xml
 
@@ -126,7 +126,7 @@ async def test_signin_old(ac: AsyncClient) -> None:
     assert response.content == b"Out of date"
 
 
-async def test_login_get(ac: AsyncClient, settings: Settings) -> None:
+async def test_login_get(ac: AsyncClient) -> None:
     """You can get the login page."""
     settings.saml_idp_show_users = False
     response = await ac.get("/login")
@@ -135,7 +135,7 @@ async def test_login_get(ac: AsyncClient, settings: Settings) -> None:
     assert b"taylorswift" not in response.content
 
 
-async def test_login_show_users(ac: AsyncClient, settings: Settings) -> None:
+async def test_login_show_users(ac: AsyncClient) -> None:
     """You can show the user credentials."""
     settings.saml_idp_show_users = True
     response = await ac.get("/login")
@@ -243,6 +243,7 @@ def logout(
 @pytest.mark.parametrize("relay_state", [None, "xxxx_relay_state"])
 async def test_logout(ac: AsyncClient, relay_state: str | None, user: User) -> None:
     """Logout works."""
+    settings.saml_idp_logout_url = "https://example.com/logout"
     ac.cookies = Cookies({"session_id": Settings.generate_session_id(user)})
     response = await ac.get(
         "/logout",
@@ -256,6 +257,7 @@ async def test_logout(ac: AsyncClient, relay_state: str | None, user: User) -> N
 
 async def test_logout_unauth(ac: AsyncClient) -> None:
     """Logout returns request denied if not logged in."""
+    settings.saml_idp_logout_url = "https://example.com/logout"
     response = await ac.get("/logout", params={"SAMLRequest": logout()})
     assert b"SAMLResponse" in response.content
     assert response.cookies == Cookies([])

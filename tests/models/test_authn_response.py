@@ -6,7 +6,7 @@ from lxml import etree
 from pydantic_core import Url
 from signxml import XMLVerifier
 
-from saml_idp import Settings
+from saml_idp.config import settings
 from saml_idp.models import AuthnResponse
 
 
@@ -33,7 +33,7 @@ def _make_response(attributes: dict[str, str]) -> AuthnResponse:
 
 
 @pytest.mark.parametrize("attributes", [{}, {"foo": "bar"}])
-def test_authn_response(attributes: dict[str, str], settings: Settings) -> None:
+def test_authn_response(attributes: dict[str, str]) -> None:
     """Construct an authn response."""
     response = _make_response(attributes)
     xml = response.to_xml(settings)
@@ -57,7 +57,7 @@ def test_authn_response(attributes: dict[str, str], settings: Settings) -> None:
     assert assertion_data is not None
 
 
-def test_attributes(settings: Settings) -> None:
+def test_attributes() -> None:
     """You can set SAML attributes."""
     response = _make_response({"foo": "bar"})
     xml = response.to_xml(settings)

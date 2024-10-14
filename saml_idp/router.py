@@ -13,8 +13,8 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.templating import Jinja2Templates
 
-from .config import Settings, User
-from .dependencies import GetSettings, GetUser
+from .config import Settings, User, settings
+from .dependencies import GetUser
 from .models import (
     AuthnRequestField,
     AuthnResponse,
@@ -32,7 +32,7 @@ router = APIRouter()
 
 
 @router.get("/metadata.xml")
-def metadata_xml(request: Request, settings: GetSettings) -> Response:
+def metadata_xml(request: Request) -> Response:
     """Return the IdP's metadata.xml."""
     lines = [line.strip() for line in settings.saml_idp_metadata_cert.splitlines()]
     cert = "".join(lines[1:-1])
@@ -107,7 +107,6 @@ def redir(
 async def signin(
     request: Request,
     user: GetUser,
-    settings: GetSettings,
     saml_request: Annotated[AuthnRequestField, Query(alias="SAMLRequest")],
     relay_state: Annotated[str, Query(alias="RelayState")] = "",
 ) -> Response:
@@ -143,7 +142,7 @@ async def signin(
 
 
 @router.get("/login")
-async def login(request: Request, settings: GetSettings) -> Response:
+async def login(request: Request) -> Response:
     """Provide a non-SAML login."""
     return templates.TemplateResponse(
         request,
@@ -159,7 +158,6 @@ async def login(request: Request, settings: GetSettings) -> Response:
 @router.post("/login")
 async def login_post(
     request: Request,
-    settings: GetSettings,
     username: Annotated[str, Form()],
     password: Annotated[str, Form()],
     saml_request_id: Annotated[str | None, Form()] = None,
@@ -212,7 +210,6 @@ async def login_post(
 async def logout(
     request: Request,
     user: GetUser,
-    settings: GetSettings,
     saml_request: Annotated[LogoutRequestField, Query(alias="SAMLRequest")],
     relay_state: Annotated[str, Query(alias="RelayState")] = "",
 ) -> Response:
