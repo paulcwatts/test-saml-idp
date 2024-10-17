@@ -4,6 +4,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import urljoin
 
 from fastapi import APIRouter, Form, Query
 from lxml import etree
@@ -22,6 +23,7 @@ from .models import (
     LogoutResponse,
     SamlMetadata,
 )
+from .urls import rel_url_for
 from .utils import is_out_of_date
 
 template_path = Path(__file__).parent.resolve() / "templates"
@@ -36,11 +38,17 @@ def metadata_xml(request: Request) -> Response:
     """Return the IdP's metadata.xml."""
     lines = [line.strip() for line in settings.saml_idp_metadata_cert.splitlines()]
     cert = "".join(lines[1:-1])
+    if base_url := str(settings.saml_idp_base_url):
+        signon_url = urljoin(base_url, rel_url_for(request, "signin"))
+        logout_url = urljoin(base_url, rel_url_for(request, "logout"))
+    else:
+        signon_url = str(request.url_for("signin"))
+        logout_url = str(request.url_for("logout"))
 
     metadata = SamlMetadata(
         entity_id=settings.saml_idp_entity_id,
-        signon_url=str(request.url_for("signin")),
-        logout_url=str(request.url_for("logout")),
+        signon_url=signon_url,
+        logout_url=logout_url,
         valid_until=datetime.now(UTC) + timedelta(days=365),
         cert=cert,
     )
@@ -55,8 +63,8 @@ async def main(request: Request, user: GetUser) -> Response:
         "main.html",
         {
             "user": user,
-            "logout_url": request.url_for("logout_post"),
-            "login_url": request.url_for("login"),
+            "logout_url": rel_url_for(request, "logout_post"),
+            "login_url": rel_url_for(request, "login"),
         },
     )
 
@@ -136,7 +144,7 @@ async def signin(
         "destination": destination,
         "request_issuer": request_issuer,
         "relay_state": relay_state,
-        "action": request.url_for("login"),
+        "action": rel_url_for(request, "login"),
     }
     return templates.TemplateResponse(request, "login.html", context)
 
@@ -150,7 +158,7 @@ async def login(request: Request) -> Response:
         {
             "show_users": settings.saml_idp_show_users,
             "users": settings.saml_idp_users,
-            "action": request.url_for("login"),
+            "action": rel_url_for(request, "login"),
         },
     )
 
@@ -188,7 +196,7 @@ async def login_post(
         # This is the normal login
         # Set a cookie and redirect
         response = RedirectResponse(
-            request.url_for("main"), status_code=status.HTTP_302_FOUND
+            rel_url_for(request, "main"), status_code=status.HTTP_302_FOUND
         )
         response.set_cookie("session_id", session_id, max_age=3600)
         return response
@@ -201,7 +209,7 @@ async def login_post(
             "destination": destination,
             "request_issuer": request_issuer,
             "relay_state": relay_state,
-            "action": request.url_for("login"),
+            "action": rel_url_for(request, "login"),
         }
         return templates.TemplateResponse(request, "login.html", context)
 
@@ -260,9 +268,9 @@ async def logout(
 
 @router.post("/logout-form")
 async def logout_post(request: Request) -> Response:
-    """Provide a non-SAML login."""
+    """Provide a non-SAML logout."""
     response = RedirectResponse(
-        request.url_for("main"), status_code=status.HTTP_302_FOUND
+        rel_url_for(request, "main"), status_code=status.HTTP_302_FOUND
     )
     response.delete_cookie("session_id")
     return response

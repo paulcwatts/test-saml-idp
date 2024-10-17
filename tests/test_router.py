@@ -46,6 +46,17 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
         schema.assertValid(etree.fromstring(xml))
 
 
+async def test_metadata_xml_base_url(ac: AsyncClient) -> None:
+    """You can use the base URL to change the signin/logout URLs."""
+    settings.saml_idp_base_url = "https://example.com"
+    response = await ac.get("/metadata.xml")
+    assert response.status_code == status.HTTP_200_OK
+    assert "text/xml" in response.headers["content-type"]
+    xml = response.content.decode()
+    assert "https://example.com/signin" in xml
+    assert "https://example.com/logout" in xml
+
+
 async def test_main_unauthenticated(ac: AsyncClient) -> None:
     """You can get the main page."""
     response = await ac.get("/login")
