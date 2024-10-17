@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     saml_idp_metadata_key_file: str = ""
     """The path of the SAML metadata key file."""
 
+    saml_idp_base_url: HttpUrl | Literal[""] = ""
+    """The Base URL used for the URLs in the SAML Metadata."""
+
     saml_idp_logout_url: HttpUrl | Literal[""] = ""
     """The logout URL to redirect to."""
 
