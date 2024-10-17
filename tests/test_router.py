@@ -32,7 +32,7 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert "text/xml" in response.headers["content-type"]
     xml = response.content.decode()
-    assert settings.saml_idp_entity_id in xml
+    assert "http://example.com/saml" in xml
     assert "http://test/signin" in xml
     assert "http://test/logout" in xml
 

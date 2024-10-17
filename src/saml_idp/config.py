@@ -19,7 +19,7 @@ class User(TypedDict):
 class Settings(BaseSettings):
     """SAML config settings."""
 
-    saml_idp_entity_id: str
+    saml_idp_entity_id: str = ""
     """The entity ID of the SAML IdP."""
 
     saml_idp_metadata_cert: str = ""
@@ -90,6 +90,4 @@ class Settings(BaseSettings):
         return h.hexdigest()
 
 
-# pyright thinks the non-default attributes are required, but they are
-# filled in by the env
-settings = Settings()  # pyright: ignore [reportCallIssue]
+settings = Settings()

@@ -21,9 +21,10 @@ license = {text = "MIT"}
 distribution = false
 
 [tool.pdm.scripts]
+_.env = {PYTHONPATH = "src"}
 dev = "fastapi dev"
 run = "fastapi run"
-test = "pytest"
+test.cmd = "pytest"
 lint-check = "ruff check ."
 type-check = "pyright"
 format-check = "black --check ."
