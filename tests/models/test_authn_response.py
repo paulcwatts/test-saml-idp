@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from lxml import etree
-from pydantic_core import Url
+from pydantic import HttpUrl
 from signxml import XMLVerifier
 
 from saml_idp.config import settings
@@ -15,8 +15,8 @@ def _make_response(attributes: dict[str, str]) -> AuthnResponse:
     not_on_or_after = datetime.now(UTC)
     return AuthnResponse(
         issue_instant=issue_instant,
-        issuer=Url("https://example.com/issuer"),
-        destination=Url("https://example.com//destination"),
+        issuer=HttpUrl("https://example.com/issuer"),
+        destination=HttpUrl("https://example.com//destination"),
         in_response_to="_yyyy",
         status_code="urn:oasis:names:tc:SAML:2.0:status:Success",
         subject_name_id_format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",

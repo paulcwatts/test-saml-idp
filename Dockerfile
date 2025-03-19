@@ -1,28 +1,28 @@
-ARG PYTHON_BASE=3.12-slim
-# build stage
-FROM python:$PYTHON_BASE AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+LABEL maintainer="paulcwatts@gmail.com"
 
-# install PDM
-RUN pip install -U pdm
-# disable update check
-ENV PDM_CHECK_UPDATE=false
-# copy files
-COPY pyproject.toml pdm.lock README.md /project/
-COPY main.py /project
-COPY src/ /project/src
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+       uv sync --frozen --no-install-project
 
-# install dependencies and project into the local packages directory
-WORKDIR /project
-RUN pdm install --check --prod --no-editable
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+       uv sync --frozen --no-install-project
 
-# run stage
-FROM python:$PYTHON_BASE
+# Final image
+FROM python:3.13-slim-bookworm
 
-# retrieve packages from build stage
-COPY --from=builder /project/.venv/ /project/.venv
-COPY --from=builder /project/main.py /project
-ENV PATH="/project/.venv/bin:$PATH"
-ENV PYTHONPATH="/project/src"
-WORKDIR /project
-COPY src /project/src
+WORKDIR /app
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+
+# Copy the application from the builder
+COPY --from=builder --chown=app:app /app /app
+
+EXPOSE 8000
+ENV PYTHONPATH=/app
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
 CMD ["fastapi", "run"]

@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 from fastapi import APIRouter, Form, Query
 from lxml import etree
-from pydantic_core import Url
+from pydantic import HttpUrl
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
@@ -86,8 +86,8 @@ def redir(
     session_index = f"_{secrets.token_hex(nbytes=16)}_{session_id}"
     authn_response = AuthnResponse(
         issue_instant=issue_instant,
-        issuer=Url(settings.saml_idp_entity_id),
-        destination=Url(destination),
+        issuer=HttpUrl(settings.saml_idp_entity_id),
+        destination=HttpUrl(destination),
         in_response_to=saml_request_id,
         status_code="urn:oasis:names:tc:SAML:2.0:status:Success",
         subject_name_id_format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
@@ -240,7 +240,7 @@ async def logout(
         logout_response = LogoutResponse(
             issue_instant=issue_instant,
             issuer=saml_request.issuer,
-            destination=Url(destination),
+            destination=HttpUrl(destination),
             in_response_to=saml_request.id,
             status_code="urn:oasis:names:tc:SAML:2.0:status:Success",
         )
@@ -249,7 +249,7 @@ async def logout(
         logout_response = LogoutResponse(
             issue_instant=issue_instant,
             issuer=saml_request.issuer,
-            destination=Url(destination),
+            destination=HttpUrl(destination),
             in_response_to=saml_request.id,
             status_code="urn:oasis:names:tc:SAML:2.0:status:RequestDenied",
         )

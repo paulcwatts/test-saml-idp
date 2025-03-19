@@ -51,7 +51,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env")
 
-    def model_post_init(self, __context: Any) -> None:
+    def model_post_init(self, __context: Any, /) -> None:
         """Initialize the certificate parameters."""
         if not self.saml_idp_metadata_cert and self.saml_idp_metadata_cert_file:
             with Path(self.saml_idp_metadata_cert_file).open() as f:

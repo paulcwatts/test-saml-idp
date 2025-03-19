@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from lxml import etree
-from pydantic_core import Url
+from pydantic import HttpUrl
 
 from saml_idp.models import LogoutResponse
 
@@ -13,7 +13,7 @@ def test_logout_response() -> None:
     response = LogoutResponse(
         issue_instant=issue_instant,
         issuer="https://advis.network/issuer",
-        destination=Url("https://advis.network/destination"),
+        destination=HttpUrl("https://advis.network/destination"),
         in_response_to="_yyy",
         status_code="urn:oasis:names:tc:SAML:2.0:status:Success",
     )
