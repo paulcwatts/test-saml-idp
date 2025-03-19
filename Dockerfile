@@ -22,7 +22,7 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 COPY --from=builder --chown=app:app /app /app
 
 EXPOSE 8000
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/src
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["fastapi", "run"]
