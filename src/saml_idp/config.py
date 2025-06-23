@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     saml_idp_router_prefix: str = ""
     """The prefix under which to include the SAML router."""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     def model_post_init(self, __context: Any, /) -> None:
         """Initialize the certificate parameters."""
