@@ -4,6 +4,7 @@ import hashlib
 from pathlib import Path
 from typing import Any, Literal, NotRequired, Required, TypedDict
 
+from fastapi_csrf_protect.flexible import CsrfProtect
 from pydantic import HttpUrl, Json
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -48,6 +49,9 @@ class Settings(BaseSettings):
 
     saml_idp_router_prefix: str = ""
     """The prefix under which to include the SAML router."""
+
+    saml_idp_secret_key: str = ""
+    """Secret key used for CSRF protection."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -94,3 +98,17 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+class CsrfSettings(BaseSettings):
+    """Settings for fastapi-csrf-protect."""
+
+    secret_key: str = settings.saml_idp_secret_key
+    cookie_secure: bool = True
+    cookie_samesite: str = "strict"
+
+
+@CsrfProtect.load_config
+def get_csrf_config() -> CsrfSettings:
+    """Return the CSRF config."""
+    return CsrfSettings()

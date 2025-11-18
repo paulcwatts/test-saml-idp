@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import Cookie, Depends
+from fastapi_csrf_protect.flexible import CsrfProtect
 
 from .config import User, settings
 
@@ -17,3 +18,4 @@ async def get_user(
 
 
 GetUser = Annotated[User | None, Depends(get_user)]
+GetCsrfProtect = Annotated[CsrfProtect, Depends()]

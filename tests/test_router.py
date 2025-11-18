@@ -17,6 +17,7 @@ pytestmark = pytest.mark.asyncio
 def _set_users() -> None:
     """Add users for these tests."""
     settings.saml_idp_users = [{"username": "taylorswift", "password": "all2well"}]
+    settings.saml_idp_secret_key = ""
 
 
 @pytest.fixture
