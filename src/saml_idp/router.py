@@ -15,7 +15,7 @@ from starlette.responses import RedirectResponse, Response
 from starlette.templating import Jinja2Templates
 
 from .config import Settings, User, settings
-from .dependencies import GetUser
+from .dependencies import GetCsrfProtect, GetUser
 from .models import (
     AuthnRequestField,
     AuthnResponse,
@@ -150,22 +150,27 @@ async def signin(
 
 
 @router.get("/login")
-async def login(request: Request) -> Response:
+async def login(request: Request, csrf_protect: GetCsrfProtect) -> Response:
     """Provide a non-SAML login."""
-    return templates.TemplateResponse(
+    csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
+    response = templates.TemplateResponse(
         request,
         "login.html",
         {
             "show_users": settings.saml_idp_show_users,
             "users": settings.saml_idp_users,
             "action": rel_url_for(request, "login"),
+            "csrf_token": csrf_token,
         },
     )
+    csrf_protect.set_csrf_cookie(signed_token, response)
+    return response
 
 
 @router.post("/login")
 async def login_post(
     request: Request,
+    csrf_protect: GetCsrfProtect,
     username: Annotated[str, Form()],
     password: Annotated[str, Form()],
     saml_request_id: Annotated[str | None, Form()] = None,
@@ -174,6 +179,10 @@ async def login_post(
     relay_state: Annotated[str | None, Form()] = None,
 ) -> Response:
     """Provide a non-SAML login."""
+    # For backward-compatibility (and for test), if the secret key is not set,
+    # then don't try to validate CSRF.
+    if settings.saml_idp_secret_key:
+        await csrf_protect.validate_csrf(request)
     # Find the user and password
     try:
         user, session_id = await settings.authenticate_user(username, password)
@@ -198,9 +207,11 @@ async def login_post(
         response = RedirectResponse(
             rel_url_for(request, "main"), status_code=status.HTTP_302_FOUND
         )
+        csrf_protect.unset_csrf_cookie(response)
         response.set_cookie("session_id", session_id, max_age=3600)
         return response
     except ValueError as e:
+        csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
         context = {
             "show_users": settings.saml_idp_show_users,
             "users": settings.saml_idp_users,
@@ -210,8 +221,11 @@ async def login_post(
             "request_issuer": request_issuer,
             "relay_state": relay_state,
             "action": rel_url_for(request, "login"),
+            "csrf_token": csrf_token,
         }
-        return templates.TemplateResponse(request, "login.html", context)
+        response = templates.TemplateResponse(request, "login.html", context)
+        csrf_protect.set_csrf_cookie(signed_token, response)
+        return response
 
 
 @router.get("/logout")

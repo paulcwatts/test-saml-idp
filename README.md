@@ -88,6 +88,7 @@ Configuration is provided via environment variables.
 | SAML_IDP_LOGOUT_URL | The URL to redirect to after Single Log Out                                               | Only if SLO is used |
 | SAML_IDP_SHOW_USERS | If True, display a table of credentials on the login screen. Defaults to False.           | No |
 | SAML_IDP_ROUTER_PREFIX | If set, adds a prefix to all URLs. Default is empty. | No | 
+| SAML_IDP_SECRET_KEY | If set, adds CSRF protection to the login page. | No, but recommended | 
 
 ## Defining Users 
 
