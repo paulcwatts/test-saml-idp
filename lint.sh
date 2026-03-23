@@ -4,4 +4,4 @@ set -e
 
 uv run ruff check .
 uv run pyright
-uv run black --check .
+uv run ruff format --check .
