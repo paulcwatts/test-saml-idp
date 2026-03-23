@@ -32,7 +32,6 @@
         "ms-azuretools.vscode-docker",
         "mhutchie.git-graph",
         "charliermarsh.ruff",
-        "ms-python.black-formatter",
         "docker.docker",
         "tamasfe.even-better-toml",
         "github.vscode-github-actions"
