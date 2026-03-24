@@ -3,7 +3,6 @@
 import uuid
 from datetime import datetime
 
-import signxml
 from lxml import etree
 from pydantic import BaseModel, HttpUrl
 from signxml import CanonicalizationMethod, XMLSigner
@@ -87,7 +86,6 @@ class AuthnResponse(BaseModel):
         signer = XMLSigner(
             c14n_algorithm=CanonicalizationMethod.EXCLUSIVE_XML_CANONICALIZATION_1_0,
         )
-        signer.namespaces = {None: signxml.namespaces.ds}
         signed_assertion = signer.sign(
             assertion,
             key=settings.saml_idp_metadata_key,

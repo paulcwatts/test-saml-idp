@@ -48,7 +48,7 @@ SAML = ElementMaker(
     namespace="urn:oasis:names:tc:SAML:2.0:assertion",
     nsmap={None: "urn:oasis:names:tc:SAML:2.0:assertion"},
 )
-DS = ElementMaker(namespace=signxml.namespaces.ds, nsmap={None: signxml.namespaces.ds})
+DS = ElementMaker(namespace=signxml.namespaces.ds, nsmap={"ds": signxml.namespaces.ds})
 
 
 def saml2_timestamp(dt: datetime) -> str:
