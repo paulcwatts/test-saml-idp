@@ -4,7 +4,7 @@ set -e
 set -x
 
 # Install uv
-curl -LsSf https://astral.sh/uv/0.9.18/install.sh | sh
+curl -LsSf https://astral.sh/uv/0.10.10/install.sh | sh
 
 uv sync
 
