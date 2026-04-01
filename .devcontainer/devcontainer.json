@@ -13,7 +13,8 @@
   },
 
   "containerEnv": {
-    "UV_LINK_MODE": "copy"
+    "UV_LINK_MODE": "copy",
+    "UV_EXCLUDE_NEWER": "7 days"
   },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
