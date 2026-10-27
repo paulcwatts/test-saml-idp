@@ -36,7 +36,7 @@ async def test_authenticate_user() -> None:
     """You can authenticate a user."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
+        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',
     )
     user, session_id = await settings.authenticate_user("taylorswift", "all2well")
     assert user["username"] == "taylorswift"
@@ -48,7 +48,7 @@ async def test_authenticate_user_fail() -> None:
     """Authenticate user throws an error if failed."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
+        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',
     )
     with pytest.raises(ValueError, match=r"Invalid username or password."):
         await settings.authenticate_user("taylorswift", "notpassword")
@@ -59,7 +59,7 @@ async def test_get_user_from_session() -> None:
     """You can get a user from a session."""
     settings = Settings(
         saml_idp_entity_id="x",
-        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',  # pyright: ignore[reportArgumentType]
+        saml_idp_users='[{"username": "taylorswift", "password": "all2well"}]',
     )
     user = await settings.get_user_from_session(
         settings.generate_session_id(

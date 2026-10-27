@@ -9,7 +9,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 
 
-def inflate_and_decode(data: str | bytes) -> etree.ElementTree:
+def inflate_and_decode(data: str | bytes) -> etree._Element:
     """Inflate and decode a SAML request."""
     # https://github.com/IdentityPython/pysaml2/blob/master/src/saml2/s_utils.py
     unzipped = zlib.decompress(base64.b64decode(data), -15)
@@ -21,12 +21,12 @@ def deflate_and_encode(data: str) -> bytes:
     return base64.b64encode(zlib.compress(data.encode())[2:-4])
 
 
-def encode_response(tree: etree.ElementTree) -> str:
+def encode_response(tree: etree._Element) -> str:
     """Encode a SAML response."""
     return base64.b64encode(etree.tostring(tree)).decode()
 
 
-def get_elem_from_path(tree: etree.ElementTree, xpath: str) -> list[etree.Element]:
+def get_elem_from_path(tree: etree._Element, xpath: str) -> list[etree._Element]:
     """Get a single element from a path."""
     return tree.xpath(
         xpath,

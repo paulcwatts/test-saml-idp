@@ -32,7 +32,7 @@ def validate_authn_request(data: Any) -> AuthnRequest:
         raise ValueError(msg)
 
     req = AuthnRequest()
-    req.id = tree.get("ID")
+    req.id = tree.get("ID", "")
     req.issue_instant = DateTimeValidate.validate_python(tree.get("IssueInstant"))
     req.assertion_consumer_service_url = HttpUrlValidate.validate_python(
         tree.get("AssertionConsumerServiceURL"),
@@ -41,7 +41,7 @@ def validate_authn_request(data: Any) -> AuthnRequest:
 
     elems = get_elem_from_path(tree, "/saml2p:AuthnRequest/saml2:Issuer")
     if len(elems) > 0:
-        req.issuer = elems[0].text
+        req.issuer = elems[0].text or ""
     else:
         msg = "No issuer found in request"
         raise ValueError(msg)

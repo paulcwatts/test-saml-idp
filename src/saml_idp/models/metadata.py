@@ -25,7 +25,7 @@ class SamlMetadata(BaseModel):
     valid_until: datetime
     cert: str
 
-    def to_xml(self) -> etree:
+    def to_xml(self) -> etree._Element:
         """Serialize to XML."""
         key_info = DS.KeyInfo(DS.X509Data(DS.X509Certificate(self.cert)))
         key_desc = META.KeyDescriptor(key_info, use="signing")

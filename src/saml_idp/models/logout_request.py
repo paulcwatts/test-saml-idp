@@ -33,28 +33,28 @@ def validate_logout_request(data: Any) -> LogoutRequest:
         raise ValueError(msg)
 
     req = LogoutRequest()
-    req.id = tree.get("ID")
+    req.id = tree.get("ID", "")
     req.issue_instant = DateTimeValidate.validate_python(tree.get("IssueInstant"))
     req.not_on_or_after = DateTimeValidate.validate_python(tree.get("NotOnOrAfter"))
     req.destination = HttpUrlValidate.validate_python(tree.get("Destination"))
 
     elems = get_elem_from_path(tree, "/saml2p:LogoutRequest/saml2:Issuer")
     if len(elems) > 0:
-        req.issuer = elems[0].text
+        req.issuer = elems[0].text or ""
     else:
         msg = "No issuer found in request"
         raise ValueError(msg)
 
     elems = get_elem_from_path(tree, "/saml2p:LogoutRequest/saml2:NameID")
     if len(elems) > 0:
-        req.name_id = elems[0].text
+        req.name_id = elems[0].text or ""
     else:
         msg = "No name_id found in request"
         raise ValueError(msg)
 
     elems = get_elem_from_path(tree, "/saml2p:LogoutRequest/saml2p:SessionIndex")
     if len(elems) > 0:
-        req.session_index = elems[0].text
+        req.session_index = elems[0].text or ""
     else:
         msg = "No session_index found in request"
         raise ValueError(msg)
