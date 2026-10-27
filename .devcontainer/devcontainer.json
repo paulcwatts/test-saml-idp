@@ -28,7 +28,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.vscode-pylance",
+        "astral-sh.ty",
         "ms-python.python",
         "ms-python.debugpy",
         "ms-azuretools.vscode-docker",
