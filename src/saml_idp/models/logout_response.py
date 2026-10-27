@@ -18,7 +18,7 @@ class LogoutResponse(BaseModel):
     issuer: str
     status_code: str
 
-    def to_xml(self) -> etree:
+    def to_xml(self) -> etree._Element:
         """Build an XML file from the model."""
         issue_instant = saml2_timestamp(self.issue_instant)
         response_attrs = {

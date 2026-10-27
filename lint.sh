@@ -3,5 +3,5 @@ set -x
 set -e
 
 uv run ruff check .
-uv run pyright
+uv check --preview-features check-command
 uv run ruff format --check .

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient, Cookies
 from lxml import etree
+from pydantic import HttpUrl
 from starlette import status
 
 from saml_idp import Settings
@@ -49,7 +50,7 @@ async def test_metadata_xml(ac: AsyncClient) -> None:
 
 async def test_metadata_xml_base_url(ac: AsyncClient) -> None:
     """You can use the base URL to change the signin/logout URLs."""
-    settings.saml_idp_base_url = "https://example.com"
+    settings.saml_idp_base_url = HttpUrl("https://example.com")
     response = await ac.get("/metadata.xml")
     assert response.status_code == status.HTTP_200_OK
     assert "text/xml" in response.headers["content-type"]
@@ -255,7 +256,7 @@ def logout(
 @pytest.mark.parametrize("relay_state", [None, "xxxx_relay_state"])
 async def test_logout(ac: AsyncClient, relay_state: str | None, user: User) -> None:
     """Logout works."""
-    settings.saml_idp_logout_url = "https://example.com/logout"
+    settings.saml_idp_logout_url = HttpUrl("https://example.com/logout")
     ac.cookies = Cookies({"session_id": Settings.generate_session_id(user)})
     response = await ac.get(
         "/logout",
@@ -269,7 +270,7 @@ async def test_logout(ac: AsyncClient, relay_state: str | None, user: User) -> N
 
 async def test_logout_unauth(ac: AsyncClient) -> None:
     """Logout returns request denied if not logged in."""
-    settings.saml_idp_logout_url = "https://example.com/logout"
+    settings.saml_idp_logout_url = HttpUrl("https://example.com/logout")
     response = await ac.get("/logout", params={"SAMLRequest": logout()})
     assert b"SAMLResponse" in response.content
     assert response.cookies == Cookies([])

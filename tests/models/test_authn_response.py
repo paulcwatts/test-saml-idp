@@ -62,5 +62,6 @@ def test_attributes() -> None:
     response = _make_response({"foo": "bar"})
     xml = response.to_xml(settings)
     attr = xml.find(".//{urn:oasis:names:tc:SAML:2.0:assertion}Attribute")
+    assert attr is not None
     assert attr.get("Name") == "foo"
     assert attr[0].text == "bar"

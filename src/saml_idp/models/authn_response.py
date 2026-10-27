@@ -30,7 +30,7 @@ class AuthnResponse(BaseModel):
     authn_context_class_ref: str
     session_index: str
 
-    def to_xml(self, settings: Settings) -> etree:
+    def to_xml(self, settings: Settings) -> etree._Element:
         """Build an XML file from the model."""
         issue_instant = saml2_timestamp(self.issue_instant)
         response_attrs = {
